@@ -1,0 +1,214 @@
+### 3. **Employee Management System**
+**Description**: Create a system to manage employee records, track attendance, and generate payroll.
+**Key Features**:
+- Use of PL/SQL for data manipulation.
+- Triggers for attendance tracking.
+- Stored procedures for payroll calculation.
+- Data validation and error handling.
+
+design Architecture For above Project Using Oracle
+
+
+
+
+Provide soltions for above project using Oracle
+
+
+Designing an architecture for an Employee Management System using Oracle involves several layers and components to ensure efficient data management, integrity, and performance. Here's a detailed architecture design:
+
+### 1. **Database Schema Design**
+
+**Tables**:
+- **Employees**: Stores employee details.
+- **Attendance**: Tracks daily attendance.
+- **Payroll**: Manages payroll information.
+- **Departments**: Stores department details.
+- **Notifications**: Manages notifications for overdue tasks or alerts.
+
+**Example Schema**:
+
+**Employees Table**:
+```sql
+CREATE TABLE employees (
+  employee_id NUMBER PRIMARY KEY,
+  employee_name VARCHAR2(100),
+  department_id NUMBER,
+  hire_date DATE,
+  salary NUMBER,
+  FOREIGN KEY (department_id) REFERENCES departments(department_id)
+);
+```
+
+**Attendance Table**:
+```sql
+CREATE TABLE attendance (
+  attendance_id NUMBER PRIMARY KEY,
+  employee_id NUMBER,
+  checkin_date DATE,
+  checkout_date DATE,
+  FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
+);
+```
+
+**Payroll Table**:
+```sql
+CREATE TABLE payroll (
+  payroll_id NUMBER PRIMARY KEY,
+  employee_id NUMBER,
+  pay_date DATE,
+  amount NUMBER,
+  FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
+);
+```
+
+**Departments Table**:
+```sql
+CREATE TABLE departments (
+  department_id NUMBER PRIMARY KEY,
+  department_name VARCHAR2(100)
+);
+```
+
+**Notifications Table**:
+```sql
+CREATE TABLE notifications (
+  notification_id NUMBER PRIMARY KEY,
+  employee_id NUMBER,
+  message VARCHAR2(255),
+  notification_date DATE DEFAULT SYSDATE,
+  FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
+);
+```
+
+### 2. **PL/SQL for Data Manipulation**
+
+**Example**: Basic CRUD operations for managing employee records.
+
+**Create**:
+```sql
+CREATE OR REPLACE PROCEDURE add_employee (
+  p_employee_id IN NUMBER,
+  p_employee_name IN VARCHAR2,
+  p_department_id IN NUMBER,
+  p_hire_date IN DATE,
+  p_salary IN NUMBER
+) AS
+BEGIN
+  INSERT INTO employees (employee_id, employee_name, department_id, hire_date, salary)
+  VALUES (p_employee_id, p_employee_name, p_department_id, p_hire_date, p_salary);
+  COMMIT;
+END;
+```
+
+**Read**:
+```sql
+CREATE OR REPLACE PROCEDURE get_employee (
+  p_employee_id IN NUMBER,
+  p_employee_name OUT VARCHAR2,
+  p_department_id OUT NUMBER,
+  p_hire_date OUT DATE,
+  p_salary OUT NUMBER
+) AS
+BEGIN
+  SELECT employee_name, department_id, hire_date, salary
+  INTO p_employee_name, p_department_id, p_hire_date, p_salary
+  FROM employees
+  WHERE employee_id = p_employee_id;
+END;
+```
+
+**Update**:
+```sql
+CREATE OR REPLACE PROCEDURE update_employee (
+  p_employee_id IN NUMBER,
+  p_employee_name IN VARCHAR2,
+  p_department_id IN NUMBER,
+  p_hire_date IN DATE,
+  p_salary IN NUMBER
+) AS
+BEGIN
+  UPDATE employees
+  SET employee_name = p_employee_name,
+      department_id = p_department_id,
+      hire_date = p_hire_date,
+      salary = p_salary
+  WHERE employee_id = p_employee_id;
+  COMMIT;
+END;
+```
+
+**Delete**:
+```sql
+CREATE OR REPLACE PROCEDURE delete_employee (
+  p_employee_id IN NUMBER
+) AS
+BEGIN
+  DELETE FROM employees
+  WHERE employee_id = p_employee_id;
+  COMMIT;
+END;
+```
+
+### 3. **Triggers for Attendance Tracking**
+
+**Example**: Trigger to record attendance when an employee checks in.
+
+```sql
+CREATE OR REPLACE TRIGGER trg_record_attendance
+AFTER INSERT ON checkins
+FOR EACH ROW
+BEGIN
+  INSERT INTO attendance (employee_id, checkin_date)
+  VALUES (:NEW.employee_id, :NEW.checkin_date);
+END;
+```
+
+### 4. **Stored Procedures for Payroll Calculation**
+
+**Example**: Stored procedure to calculate payroll for all employees.
+
+```sql
+CREATE OR REPLACE PROCEDURE calculate_payroll AS
+BEGIN
+  FOR rec IN (SELECT employee_id, salary FROM employees) LOOP
+    INSERT INTO payroll (employee_id, pay_date, amount)
+    VALUES (rec.employee_id, SYSDATE, rec.salary);
+  END LOOP;
+  COMMIT;
+END;
+```
+
+### 5. **Data Validation and Error Handling**
+
+**Example**: Procedure with data validation and error handling.
+
+```sql
+CREATE OR REPLACE PROCEDURE add_employee_with_validation (
+  p_employee_id IN NUMBER,
+  p_employee_name IN VARCHAR2,
+  p_department_id IN NUMBER,
+  p_hire_date IN DATE,
+  p_salary IN NUMBER
+) AS
+BEGIN
+  IF p_salary < 0 THEN
+    RAISE_APPLICATION_ERROR(-20001, 'Salary cannot be negative');
+  END IF;
+
+  INSERT INTO employees (employee_id, employee_name, department_id, hire_date, salary)
+  VALUES (p_employee_id, p_employee_name, p_department_id, p_hire_date, p_salary);
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE;
+END;
+```
+
+### Additional Considerations
+
+- **Data Integrity**: Ensure referential integrity using foreign keys.
+- **Security**: Use roles and privileges to secure sensitive data.
+- **Performance Optimization**: Use indexes and optimize queries for better performance.
+
+This architecture will help you build a robust Employee Management System using Oracle, demonstrating your ability to handle complex SQL queries, use PL/SQL for business logic, and ensure data integrity and error handling. Let me know if you need further details or assistance with any specific part of the project!
